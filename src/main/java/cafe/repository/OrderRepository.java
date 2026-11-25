@@ -15,6 +15,6 @@ public interface OrderRepository {
 
     List<Order> findByCustomerId(String customerId);
 
-    /** 새 주문번호를 만든다 (O-0001, O-0002 ...). */
+    /** 다음 주문번호를 알려준다 (O-0001, O-0002 ...). 번호는 save()로 주문이 저장될 때 확정된다. */
     String nextId();
 }

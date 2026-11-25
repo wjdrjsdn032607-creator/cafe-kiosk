@@ -54,16 +54,61 @@ public class OrderScreen {
                 out.println("담은 메뉴가 없어서 주문을 취소했어요.");
                 return;
             }
-            String memberId = in.readLine("회원 번호 (비회원은 엔터): ");
-            String couponCode = in.readLine("쿠폰 코드 (없으면 엔터): ");
-            PaymentType paymentType = readPaymentType();
-
-            Receipt receipt = orderService.placeOrder(
-                    new OrderRequest(memberId, items, couponCode, paymentType));
-            out.println();
-            out.println(receipt.format());
+            checkoutWithRetry(items);
         } catch (CafeException | IllegalArgumentException e) {
             out.println("주문 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 회원 번호·쿠폰은 입력하는 즉시 확인해서, 틀리면 그 칸만 다시 물어본다.
+     * 결제(예: 포인트 부족)에서 실패하면 담아둔 메뉴는 그대로 두고 결제 수단만 다시 고르게 한다.
+     */
+    private void checkoutWithRetry(List<OrderItemRequest> items) {
+        String memberId = readMemberId();
+        String couponCode = readCouponCode();
+        while (true) {
+            PaymentType paymentType = readPaymentType();
+            try {
+                Receipt receipt = orderService.placeOrder(
+                        new OrderRequest(memberId, items, couponCode, paymentType));
+                out.println();
+                out.println(receipt.format());
+                return;
+            } catch (CafeException e) {
+                out.println("결제 실패: " + e.getMessage());
+                out.println("1. 결제 수단 다시 고르기   0. 주문 취소");
+                if (in.readInt("> ", 0, 1) == 0) {
+                    out.println("주문을 취소했어요.");
+                    return;
+                }
+            }
+        }
+    }
+
+    /** 있는 회원 번호(또는 비회원 엔터)가 들어올 때까지 다시 묻는다. */
+    private String readMemberId() {
+        while (true) {
+            String memberId = in.readLine("회원 번호 (비회원은 엔터): ");
+            try {
+                orderService.checkMember(memberId);
+                return memberId;
+            } catch (CafeException e) {
+                out.println("  " + e.getMessage() + " 다시 입력해 주세요.");
+            }
+        }
+    }
+
+    /** 쓸 수 있는 쿠폰(또는 없으면 엔터)이 들어올 때까지 다시 묻는다. */
+    private String readCouponCode() {
+        while (true) {
+            String couponCode = in.readLine("쿠폰 코드 (없으면 엔터): ");
+            try {
+                orderService.checkCoupon(couponCode);
+                return couponCode;
+            } catch (CafeException e) {
+                out.println("  " + e.getMessage() + " 다시 입력해 주세요.");
+            }
         }
     }
 
@@ -75,8 +120,9 @@ public class OrderScreen {
             return;
         }
         for (Order order : orders) {
-            String names = order.getItems().stream()
-                    .map(MenuItem::description)
+            String names = order.getLines().stream()
+                    .map(line -> line.item().description()
+                            + (line.quantity() > 1 ? " x" + line.quantity() : ""))
                     .collect(Collectors.joining(", "));
             out.println(String.format(Locale.US, "%s [%s] %s / %s / %,d원",
                     order.getId(), order.getStatus().getLabel(),

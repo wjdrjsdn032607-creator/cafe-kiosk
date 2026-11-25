@@ -1,6 +1,5 @@
 package cafe.domain.order;
 
-import cafe.domain.menu.MenuItem;
 import cafe.domain.menu.PriceLine;
 
 import java.time.format.DateTimeFormatter;
@@ -42,12 +41,15 @@ public class Receipt {
         sb.append("주문번호: ").append(order.getId())
                 .append("   ").append(order.getCreatedAt().format(TIME_FORMAT)).append('\n');
         sb.append("고객: ").append(order.getCustomer().getName())
-                .append(" (").append(order.getCustomer().getGrade().name()).append(")\n");
+                .append(" (").append(order.getGradeAtOrder()).append(")\n");   // 주문 당시 등급으로 고정
         sb.append(line).append('\n');
 
-        for (MenuItem item : order.getItems()) {
-            for (PriceLine priceLine : item.priceLines()) {
-                sb.append(row(priceLine.label(), money(priceLine.amount()))).append('\n');
+        // 같은 메뉴는 한 줄로 묶고 "x수량"을 붙인다. 금액도 수량만큼 곱한다.
+        for (OrderLine orderLine : order.getLines()) {
+            int quantity = orderLine.quantity();
+            String suffix = quantity > 1 ? " x" + quantity : "";
+            for (PriceLine priceLine : orderLine.item().priceLines()) {
+                sb.append(row(priceLine.label() + suffix, money(priceLine.amount() * quantity))).append('\n');
             }
         }
         sb.append(line).append('\n');

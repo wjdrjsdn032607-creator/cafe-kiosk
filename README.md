@@ -93,7 +93,7 @@ cafe-kiosk/
     │   │   ├─ member/         Customer, Member, GuestMember, MembershipGrade, RateBasedGrade, Bronze, Silver, Gold, GuestGrade
     │   │   ├─ discount/       DiscountPolicy, GradeDiscount, Coupon, AmountCoupon, PercentCoupon
     │   │   ├─ payment/        Payment, CardPayment, PointPayment, PaymentType
-    │   │   └─ order/          Order, OrderStatus, DiscountLine, Receipt
+    │   │   └─ order/          Order, OrderLine, OrderStatus, DiscountLine, Receipt
     │   ├─ repository/         저장소 인터페이스 4개와 메모리 구현
     │   ├─ service/            OrderService, MemberService, MenuService, 요청 객체
     │   └─ ui/console/         ConsoleApp, ConsoleInput, MenuScreen, OrderScreen, MemberScreen
@@ -119,7 +119,7 @@ cafe-kiosk/
 
 한글이 `???`로 보이면 `Help > Edit Custom VM Options`에 `-Dfile.encoding=UTF-8`을 추가하고 IntelliJ를 재시작한다.
 
-> **Windows 주의:** 프로젝트를 OneDrive 폴더나 한글이 들어간 경로(예: `문서\카카오톡 받은 파일`)에 두면 테스트가 `ClassNotFoundException`으로 실패하거나 `build` 폴더를 지우지 못하는 오류가 난다. `C:\Users\<사용자>\cafe-kiosk`처럼 영문 경로에 두고, 옮긴 뒤에는 `build`, `.gradle` 폴더를 지우고 다시 빌드한다.
+> **Windows 주의:** 프로젝트를 OneDrive 폴더나 한글이 들어간 경로에 두면 테스트가 `ClassNotFoundException`으로 실패하거나 `build` 폴더를 지우지 못하는 오류가 난다. `C:\Users\<사용자>\cafe-kiosk`처럼 영문 경로에 두고, 옮긴 뒤에는 `build`, `.gradle` 폴더를 지우고 다시 빌드한다.
 
 ### 방법 2: 터미널 (Gradle)
 
@@ -227,13 +227,13 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 테스트 클래스 | 개수 | 확인 내용 |
 |---|---|---|
 | `MenuItemTest` | 10 | 사이즈·옵션 가격, 스무디 온도 제한, 디저트 옵션 금지, 옵션 겹치기 |
-| `MemberTest` | 9 | 적립, 자동 승급, 골드 보너스, 포인트 부족, 적립 취소, 비회원 |
+| `MemberTest` | 10 | 적립, 자동 승급, 골드 보너스, 포인트 부족, 적립 취소, 취소 시 등급 재계산, 비회원 |
 | `DiscountPolicyTest` | 5 | 등급 할인, 쿠폰(정액/정률/만료/재사용) |
-| `OrderTest` | 11 | 할인 순서와 금액, 취소·환원, 결제 실패 시 상태 유지 |
-| `OrderServiceTest` | 11 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소, 내역 조회 |
-| **합계** | **46** | 해피아워 테스트 2개를 뺀 뒤 46개 모두 통과 |
+| `OrderTest` | 12 | 할인 순서와 금액, 취소·환원, 결제 실패 시 상태 유지, 포인트 결제 적립 제외, 영수증 등급 고정 |
+| `OrderServiceTest` | 14 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소, 내역 조회, 결제 실패 시 주문번호 유지, 수량 표시, 결제 전 회원·쿠폰 확인 |
+| **합계** | **51** | 51개 모두 통과 |
 
-> 팀 환경 실행 결과: 2026-11-25, Windows 11 · JDK 21 · IntelliJ에서 `src/test` 전체 실행, **46개 모두 통과** (심은지)
+> 팀 환경 실행 결과: 2026-11-25, Windows 11 · JDK 21 · IntelliJ에서 `src/test` 전체 실행, **51개 모두 통과** (심은지)
 
 ### 콘솔 기능 점검 (수동)
 
@@ -245,6 +245,9 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 포인트 결제 / 취소 환원 | GOLD가 쿠키를 포인트로 결제 후 취소 | 정상 (8,203P로 복구) |
 | 회원 조회 | `M003` | 정상 |
 | 잘못된 입력 | 글자·범위 밖 숫자 | 다시 입력 요청 (프로그램 종료 없음) |
+| 회원번호·쿠폰 오타 | `M0003`, `WELCOM500` | 그 자리에서 다시 입력 요청 (엔터는 비회원·쿠폰 없음) |
+| 결제 실패 | 포인트 0인 회원이 포인트 결제 | 결제 수단 다시 고르기 또는 주문 취소 선택 |
+| 같은 메뉴 여러 개 | 초코 쿠키 수량 3 | 영수증에 `초코 쿠키 x3  7,500` 한 줄 |
 
 ### 예외 처리 목록
 
@@ -262,8 +265,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 
 ### 알려진 한계 (개선 후보)
 
-- 결제 단계에서 실패한 주문(예: 카드 한도 초과)도 주문번호 하나를 소비한다.
-- 취소해도 사용한 쿠폰은 복구되지 않고, 한 번 승급한 등급은 강등되지 않는다.
+- 취소해도 사용한 쿠폰은 복구되지 않는다.
 - 데이터는 메모리에만 저장되어 프로그램을 종료하면 사라진다.
 
 ## 9. 객체지향 설계 개선 내용
@@ -276,6 +278,11 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 11주차 (TODO) | | | |
 | 12주차 (TODO) | | | |
 | 13주차 | 해피아워(14~16시 10%)를 자동 할인으로 적용 | 해피아워 제외, `automaticPolicies`는 빈 목록으로 유지 | 실제 시각에 따라 결과가 달라져 시연과 테스트가 불안정. 팀 결정으로 제외했고, 자동 할인을 넣는 자리는 남겨서 새 할인(예: 생일 할인)은 `Main`에 한 줄 추가로 가능 (개방-폐쇄) |
+| 13주차 | 결제가 실패해도 주문번호가 하나 소비됨 | `nextId()`는 다음 번호를 보기만 하고, 번호는 `save()`할 때 확정 | 실패한 주문 때문에 번호가 건너뛰면 기록이 헷갈림. 번호를 정하는 책임을 저장소 한 곳에 둠 |
+| 13주차 | 같은 메뉴를 여러 개 시키면 영수증에 같은 줄이 반복됨 | `OrderLine`(메뉴, 수량) record를 만들어 `x3`처럼 한 줄로 표시 | 영수증 가독성. `Order`의 저장 방식은 그대로 두고 보여주는 방법만 추가 |
+| 13주차 | 포인트로 낸 금액에도 포인트가 적립됨, 취소해도 등급이 그대로 | `Payment.earnableAmount()`를 두고 `PointPayment`만 0을 돌려줌. 취소 시 누적 금액으로 등급을 다시 계산 | `Order`에 `if (포인트 결제)`를 넣지 않고 결제 클래스가 스스로 결정 (다형성, 개방-폐쇄) |
+| 13주차 | 회원번호·쿠폰 오타가 결제 단계에서야 실패해서 처음부터 다시 주문 | `OrderService.checkMember()`, `checkCoupon()`으로 입력 즉시 확인, 결제 실패 시 결제 수단 다시 선택 | 사용자 입력 실수 처리. 확인 규칙은 `Coupon.checkUsable()`에 두어 결제 때와 같은 규칙을 씀 |
+| 13주차 | 영수증 등급이 지금 등급을 보여줘서 승급 뒤 예전 영수증이 바뀜 | 결제할 때 등급을 `Order`에 저장(`gradeAtOrder`) | 영수증은 그 시점 기록이어야 함 |
 
 > 13주차 현재 11·12주차 행이 비어 있다. 이번 주 안에 실제로 바꾼 내용으로 채운다.
 

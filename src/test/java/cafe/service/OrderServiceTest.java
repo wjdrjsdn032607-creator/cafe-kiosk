@@ -138,6 +138,41 @@ class OrderServiceTest {
     }
 
     @Test
+    void 결제가_실패한_주문은_주문번호를_소비하지_않는다() {
+        // M001은 포인트가 0이라 포인트 결제가 실패한다.
+        assertThrows(CafeException.class,
+                () -> orderService.placeOrder(americanoLarge("M001", "", PaymentType.POINT)));
+
+        Receipt receipt = orderService.placeOrder(americanoLarge("", "", PaymentType.CARD));
+        assertEquals("O-0001", receipt.getOrderId());
+    }
+
+    @Test
+    void 같은_메뉴를_여러_개_시키면_영수증에_한_줄로_수량이_표시된다() {
+        OrderItemRequest cookies = new OrderItemRequest("D02", null, null, List.of(), 3);
+        Receipt receipt = orderService.placeOrder(new OrderRequest("", List.of(cookies), "", PaymentType.CARD));
+        String text = receipt.format();
+
+        assertTrue(text.contains("초코 쿠키 x3"));
+        assertTrue(text.contains("7,500"));
+        assertEquals(1, text.split("초코 쿠키", -1).length - 1);   // 줄이 하나만 있다
+    }
+
+    @Test
+    void 회원번호와_쿠폰은_결제_전에_바로_확인할_수_있다() {
+        orderService.checkMember("");          // 비회원은 통과
+        orderService.checkMember("M003");      // 있는 회원은 통과
+        assertThrows(CafeException.class, () -> orderService.checkMember("M0003"));
+
+        orderService.checkCoupon("");          // 쿠폰 없음은 통과
+        orderService.checkCoupon("WELCOME500");
+        assertThrows(CafeException.class, () -> orderService.checkCoupon("WELCOM500"));
+
+        orderService.placeOrder(americanoLarge("M001", "WELCOME500", PaymentType.CARD));
+        assertThrows(CafeException.class, () -> orderService.checkCoupon("WELCOME500"));   // 이미 사용
+    }
+
+    @Test
     void 신규_회원은_브론즈로_가입하고_번호가_이어진다() {
         Member member = memberService.register("박신규");
 

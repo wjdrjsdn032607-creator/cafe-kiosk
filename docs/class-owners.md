@@ -93,7 +93,7 @@
 
 ---
 
-## D. 정건우: 주문·서비스·저장소·UI (25개)
+## D. 정건우: 주문·서비스·저장소·UI (26개)
 
 다른 세 파트를 연결하는 파트다. 주문의 규칙(계산·상태 전이)은 `Order`가 직접 가지고, 서비스는 객체를 연결만 한다.
 
@@ -102,6 +102,7 @@
 | `Order` | 주문. 금액 합산, 할인 적용, 결제, 적립, 취소를 직접 처리. `status`는 `private` | 은닉성, 다형성 | `subtotal()`, `checkout()`, `cancel()`, `addItem()` |
 | `OrderStatus` | 주문 상태(생성, 결제 완료, 취소) | 은닉성 | 값 목록 |
 | `DiscountLine` | 적용된 할인 한 줄(이름, 금액) record | - | 값 객체 |
+| `OrderLine` | 영수증에 보여줄 한 줄(메뉴, 수량) record | - | `lineTotal()` |
 | `Receipt` | 영수증. 출력은 하지 않고 문자열만 만들어 줌 | 책임 분리 | `format()` |
 | `OrderService` | 주문 흐름 연결(회원·메뉴·쿠폰 확인 → 주문 생성 → 결제). 계산은 하지 않음 | 책임 분리 | `placeOrder()`, `cancelOrder()`, `findOrders()` |
 | `MemberService` | 회원 가입·조회 | 책임 분리 | `register()`, `find()` |

@@ -22,6 +22,14 @@ public abstract class Payment {
 
     public abstract String methodName();
 
+    /**
+     * 결제한 금액 중에서 포인트 적립·누적 금액에 반영할 금액.
+     * 기본은 낸 금액 전부이고, 포인트 결제처럼 적립하면 안 되는 결제 수단은 자식이 바꾼다. (오버라이딩)
+     */
+    public int earnableAmount(int paidAmount) {
+        return paidAmount;
+    }
+
     protected abstract void doPay(int amount);
 
     protected abstract void doRefund(int amount);

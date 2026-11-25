@@ -38,14 +38,19 @@ public abstract class Coupon implements DiscountPolicy {
         return "쿠폰 (" + code + ")";
     }
 
-    @Override
-    public final int discount(int amount) {
+    /** 지금 쓸 수 있는 쿠폰인지 확인한다. 이미 썼거나 기간이 지났으면 예외. */
+    public void checkUsable() {
         if (used) {
             throw new CafeException("이미 사용한 쿠폰이에요: " + code);
         }
         if (LocalDate.now(clock).isAfter(expiresOn)) {
             throw new CafeException("유효기간이 지난 쿠폰이에요: " + code);
         }
+    }
+
+    @Override
+    public final int discount(int amount) {
+        checkUsable();
         return Math.min(calculate(amount), amount);
     }
 

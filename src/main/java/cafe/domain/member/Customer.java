@@ -23,6 +23,6 @@ public interface Customer {
 
     void restorePoints(int points);
 
-    /** 주문 취소 시 적립했던 포인트와 누적 금액을 되돌린다. */
+    /** 주문 취소 시 적립했던 포인트와 누적 금액을 되돌리고, 등급을 다시 계산한다. */
     void reverseEarn(int paidAmount, int earnedPoints);
 }

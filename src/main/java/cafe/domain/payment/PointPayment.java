@@ -16,6 +16,12 @@ public class PointPayment extends Payment {
         return "포인트";
     }
 
+    /** 포인트로 낸 금액은 다시 적립하지 않고, 승급용 누적 금액에도 넣지 않는다. */
+    @Override
+    public int earnableAmount(int paidAmount) {
+        return 0;
+    }
+
     @Override
     protected void doPay(int amount) {
         customer.usePoints(amount);

@@ -97,6 +97,20 @@ class OrderTest {
     }
 
     @Test
+    void 영수증에는_주문_당시_등급이_고정된다() {
+        Member silver = new Member("M2", "김실버", 0, 120_000);   // SILVER
+        Order order = new Order("O-1", silver, clock);
+        order.addItem(new Dessert("D1", "케이크", 200_000));
+        Receipt receipt = order.checkout(new CardPayment("TEST", 1_000_000), List.of());
+
+        assertEquals("GOLD", silver.getGrade().name());          // 결제 후 승급
+        assertTrue(receipt.format().contains("김실버 (SILVER)"));  // 영수증은 주문 당시 등급
+
+        order.cancel();                                            // 취소해도
+        assertTrue(order.receipt().format().contains("김실버 (SILVER)"));
+    }
+
+    @Test
     void 결제_전_주문은_취소할_수_없다() {
         Order order = new Order("O-1", gold, clock);
         order.addItem(new Dessert("D1", "쿠키", 2_500));
@@ -107,12 +121,14 @@ class OrderTest {
     void 포인트로_결제하면_포인트가_차감되고_취소하면_환원된다() {
         Order order = new Order("O-1", gold, clock);
         order.addItem(new Dessert("D1", "쿠키", 2_500));
-        order.checkout(new PointPayment(gold), List.of());   // 2,500 - 125 = 2,375 사용, 118 적립
+        order.checkout(new PointPayment(gold), List.of());   // 2,500 - 125 = 2,375 사용, 포인트 결제라 적립 0
 
-        assertEquals(8_000 - 2_375 + 118, gold.getPoints());
+        assertEquals(8_000 - 2_375, gold.getPoints());
+        assertEquals(350_000, gold.getTotalSpent());           // 포인트 결제는 누적 금액에도 안 들어감
 
         order.cancel();
         assertEquals(8_000, gold.getPoints());
+        assertEquals(350_000, gold.getTotalSpent());
     }
 
     @Test
