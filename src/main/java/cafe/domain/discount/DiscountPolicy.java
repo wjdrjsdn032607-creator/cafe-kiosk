@@ -1,7 +1,7 @@
 package cafe.domain.discount;
 
 /**
- * 할인 규약(인터페이스). 등급 할인, 해피아워, 쿠폰이 각자 다른 방식으로 구현한다.
+ * 할인 규약(인터페이스). 등급 할인, 쿠폰(정액·정률)이 각자 다른 방식으로 구현한다.
  * Order는 어떤 할인인지 모르고 discount()만 호출한다.
  */
 public interface DiscountPolicy {

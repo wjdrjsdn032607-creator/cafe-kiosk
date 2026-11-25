@@ -17,7 +17,7 @@
 1. **메뉴 조회**: 커피, 차, 스무디, 디저트
 2. **주문 생성**: 사이즈, 온도, 수량, 옵션 조합(샷 추가, 시럽, 휘핑크림)
 3. **회원 관리**: 가입·조회, 등급별 할인·포인트 적립, 누적 결제 금액에 따른 자동 승급 (BRONZE → SILVER → GOLD)
-4. **할인·결제**: 등급 할인, 해피아워(14~16시), 쿠폰(정액/정률), 카드·포인트 결제
+4. **할인·결제**: 등급 할인, 쿠폰(정액/정률), 카드·포인트 결제
 5. **주문 내역·영수증·취소**: 취소 시 환불과 적립 포인트 환원
 
 ### 실행 화면 예시 (GOLD 회원, 아이스 아메리카노 L + 샷 추가 + 시럽, 쿠폰 사용)
@@ -91,7 +91,7 @@ cafe-kiosk/
     │   ├─ domain/
     │   │   ├─ menu/           MenuItem, Beverage, Coffee, Tea, Smoothie, Dessert, OptionDecorator, ExtraShot, Syrup, WhippedCream, Option
     │   │   ├─ member/         Customer, Member, GuestMember, MembershipGrade, RateBasedGrade, Bronze, Silver, Gold, GuestGrade
-    │   │   ├─ discount/       DiscountPolicy, GradeDiscount, HappyHourDiscount, Coupon, AmountCoupon, PercentCoupon
+    │   │   ├─ discount/       DiscountPolicy, GradeDiscount, Coupon, AmountCoupon, PercentCoupon
     │   │   ├─ payment/        Payment, CardPayment, PointPayment, PaymentType
     │   │   └─ order/          Order, OrderStatus, DiscountLine, Receipt
     │   ├─ repository/         저장소 인터페이스 4개와 메모리 구현
@@ -134,7 +134,6 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|
 | 회원 | `M001` 홍길동(BRONZE), `M002` 김실버(SILVER, 누적 12만 원), `M003` 이골드(GOLD, 누적 35만 원, 8,000P) |
 | 쿠폰 | `WELCOME500`(500원 할인), `SPECIAL10`(10% 할인), 각각 1회만 사용 가능 |
-| 해피아워 | 14:00~16:00 사이에 주문하면 10% 자동 할인 |
 
 ### 시연 시나리오 (예시)
 
@@ -170,7 +169,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 위치 | 코드 | 설명 |
 |---|---|---|
 | `Order.subtotal()` | `items.stream().mapToInt(MenuItem::price)` | 커피, 디저트, 옵션이 붙은 메뉴 모두 같은 호출로 계산 |
-| `Order.checkout()` | `for (DiscountPolicy policy : policies) policy.discount(running)` | 등급 할인, 해피아워, 쿠폰을 구분하지 않고 순서대로 적용 |
+| `Order.checkout()` | `for (DiscountPolicy policy : policies) policy.discount(running)` | 등급 할인과 쿠폰을 구분하지 않고 순서대로 적용 |
 | `Order.checkout()` | `payment.pay(running)` | 카드인지 포인트인지 모르고 결제 |
 | `Member.earn()` | `grade.earnPoints(paidAmount)` | 등급마다 다른 적립 규칙 (`Gold`는 보너스) |
 | `OrderService.buildItem()` | `option.applyTo(item)` | 옵션 종류를 `if/else`로 나누지 않고 Decorator가 처리 |
@@ -181,7 +180,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|---|---|
 | `MenuItem` | 추상 클래스 | `price()`, `description()` | `Coffee`, `Tea`, `Smoothie`, `Dessert`, `ExtraShot` ... |
 | `MembershipGrade` | 인터페이스 | `discount()`, `earnPoints()`, `evaluate()` | `Bronze`, `Silver`, `Gold`, `GuestGrade` |
-| `DiscountPolicy` | 인터페이스 | `name()`, `discount()`, `onApplied()` (default) | `GradeDiscount`, `HappyHourDiscount`, `Coupon` 계열 |
+| `DiscountPolicy` | 인터페이스 | `name()`, `discount()`, `onApplied()` (default) | `GradeDiscount`, `Coupon` 계열 (`AmountCoupon`, `PercentCoupon`) |
 | `Payment` | 추상 클래스 | `doPay()`, `doRefund()` | `CardPayment`, `PointPayment` |
 | `Customer` | 인터페이스 | `earn()`, `usePoints()` 등 | `Member`, `GuestMember` (비회원을 `null`이 아닌 객체로) |
 
@@ -201,7 +200,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 
 | 내용 | 사용한 곳 |
 |---|---|
-| 생성자(값 검증) | `MenuItem`, `Member`, `Coupon`, `HappyHourDiscount` |
+| 생성자(값 검증) | `MenuItem`, `Member`, `Coupon` |
 | 메소드 오버라이딩 | `Smoothie.sizeSurcharge()`, `Gold.earnPoints()`, 각 `price()` |
 | 컬렉션 | `List<MenuItem>`, `Map`을 쓰는 `InMemory*Repository`, `EnumSet` |
 | 패키지 | `domain`, `repository`, `service`, `ui.console` |
@@ -214,7 +213,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 사용 도구 | Claude (Anthropic) |
 | 활용 수준 | **(TODO) 팀에서 확정.** 초안 생성 시점은 3단계에 해당 |
 | 주요 활용 내용 | 주제 선정 논의, 클래스 설계, 코드·테스트·문서 초안 생성 |
-| 팀에서 검토·수정한 부분 | **(TODO)** 예: 등급별 보너스 규칙 변경, 해피아워 시간대 조정, 예외 메시지 수정 |
+| 팀에서 검토·수정한 부분 | **(TODO)** 예: 등급별 보너스 규칙 변경, 해피아워 기능 제외, 예외 메시지 수정 |
 | 팀에서 직접 결정한 설계 | **(TODO)** 근거는 `docs/ai-usage-log.md`의 3번 표에 작성 |
 
 자세한 주차별 기록은 [`docs/ai-usage-log.md`](docs/ai-usage-log.md)에 있다.
@@ -227,10 +226,10 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|---|
 | `MenuItemTest` | 10 | 사이즈·옵션 가격, 스무디 온도 제한, 디저트 옵션 금지, 옵션 겹치기 |
 | `MemberTest` | 9 | 적립, 자동 승급, 골드 보너스, 포인트 부족, 적립 취소, 비회원 |
-| `DiscountPolicyTest` | 7 | 등급 할인, 쿠폰(정액/정률/만료/재사용), 해피아워 시간대 |
+| `DiscountPolicyTest` | 5 | 등급 할인, 쿠폰(정액/정률/만료/재사용) |
 | `OrderTest` | 11 | 할인 순서와 금액, 취소·환원, 결제 실패 시 상태 유지 |
 | `OrderServiceTest` | 11 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소, 내역 조회 |
-| **합계** | **48** | 초안 작성 환경에서 48개 모두 통과 |
+| **합계** | **46** | 해피아워 테스트 2개를 뺀 뒤 46개 모두 통과 |
 
 > 초안을 만든 환경에서는 JUnit 라이브러리를 내려받을 수 없어서, 같은 테스트 코드를 JUnit 호환 실행기로 돌려 확인했다.
 > **팀 환경에서 `./gradlew test`를 직접 실행해서 이 표를 갱신한다.** (TODO)
@@ -275,7 +274,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 초안 (9주차) | `OrderService`가 아닌 도메인 객체가 계산 | - | 설계 시작점 |
 | 11주차 (TODO) | | | |
 | 12주차 (TODO) | | | |
-| 13주차 (TODO) | | | |
+| 13주차 | 해피아워(14~16시 10%)를 자동 할인으로 적용 | 해피아워 제외, `automaticPolicies`는 빈 목록으로 유지 | 실제 시각에 따라 결과가 달라져 시연과 테스트가 불안정. 팀 결정으로 제외했고, 자동 할인을 넣는 자리는 남겨서 새 할인(예: 생일 할인)은 `Main`에 한 줄 추가로 가능 (개방-폐쇄) |
 
 > 13주차 현재 11·12주차 행이 비어 있다. 이번 주 안에 실제로 바꾼 내용으로 채운다.
 

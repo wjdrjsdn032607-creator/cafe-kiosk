@@ -111,7 +111,6 @@ classDiagram
         +onApplied()
     }
     class GradeDiscount
-    class HappyHourDiscount
     class Coupon {
         <<abstract>>
         -boolean used
@@ -130,7 +129,6 @@ classDiagram
     class PointPayment
 
     DiscountPolicy <|.. GradeDiscount
-    DiscountPolicy <|.. HappyHourDiscount
     DiscountPolicy <|.. Coupon
     Coupon <|-- AmountCoupon
     Coupon <|-- PercentCoupon

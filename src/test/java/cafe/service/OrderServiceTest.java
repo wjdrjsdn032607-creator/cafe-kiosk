@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** 서비스가 객체들을 올바르게 연결하는지 확인하는 통합 테스트 (해피아워는 끄고 계산을 고정). */
+/** 서비스가 객체들을 올바르게 연결하는지 확인하는 통합 테스트 (자동 할인 없이 계산을 고정). */
 class OrderServiceTest {
 
     private InMemoryMemberRepository members;
