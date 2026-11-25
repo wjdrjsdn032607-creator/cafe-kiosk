@@ -44,10 +44,10 @@ GOLD 등급 할인                    -240
 
 | 담당 | 팀원 | 역할 | 주요 클래스 |
 |---|---|---|---|
-| A | (팀원 이름) | 메뉴·옵션 | `MenuItem` 계층, `OptionDecorator` 계층 |
-| B | (팀원 이름) | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
-| C | (팀원 이름) | 할인·결제 | `DiscountPolicy` 구현체, `Payment` 계층 |
-| D | (팀원 이름) | 주문·연결·콘솔 UI | `Order`, `OrderService`, `Receipt`, `ConsoleApp` |
+| A | 조민규 | 메뉴·옵션 | `MenuItem` 계층, `OptionDecorator` 계층 |
+| B | 신준서 | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
+| C | 심은지 | 할인·결제 | `DiscountPolicy` 구현체, `Payment` 계층 |
+| D | 정건우 | 주문·연결·콘솔 UI | `Order`, `OrderService`, `Receipt`, `ConsoleApp` |
 
 공통 책임: 자기 파트 JUnit 테스트, 예외 처리, README의 OOP 적용 이유 작성, AI 활용 기록, 발표 시 자기 파트 설명.
 
