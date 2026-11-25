@@ -56,12 +56,12 @@ GOLD 등급 할인                    -240
 
 ## 2. 팀 구성
 
-| 담당 | 팀원 | 역할 | 주요 클래스 |
-|---|---|---|---|
-| A | 조민규 | 메뉴·옵션 | `MenuItem` 계층, `OptionDecorator` 계층 |
-| B | 신준서 | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
-| C | 심은지 | 할인·결제 | `DiscountPolicy` 구현체, `Payment` 계층 |
-| D | 정건우 | 주문·연결·콘솔 UI | `Order`, `OrderService`, `Receipt`, `ConsoleApp` |
+| 담당 | 팀원 | GitHub | 역할 | 주요 클래스 |
+|---|---|---|---|---|
+| A | 조민규 | (TODO) | 메뉴·옵션 | `MenuItem` 계층, `OptionDecorator` 계층 |
+| B | 신준서 | (TODO) | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
+| C | 심은지 | `eunz-711` | 할인·결제 | `DiscountPolicy` 구현체, `Payment` 계층 |
+| D | 정건우 | `wjdrjsdn032607-creator` | 주문·연결·콘솔 UI | `Order`, `OrderService`, `Receipt`, `ConsoleApp` |
 
 공통 책임: 자기 파트 JUnit 테스트, 예외 처리, README의 OOP 적용 이유 작성, AI 활용 기록, 발표 시 자기 파트 설명.
 
@@ -118,6 +118,8 @@ cafe-kiosk/
 3. 아래쪽 **Run 창을 클릭한 뒤** 번호를 입력하고 Enter를 누른다.
 
 한글이 `???`로 보이면 `Help > Edit Custom VM Options`에 `-Dfile.encoding=UTF-8`을 추가하고 IntelliJ를 재시작한다.
+
+> **Windows 주의:** 프로젝트를 OneDrive 폴더나 한글이 들어간 경로(예: `문서\카카오톡 받은 파일`)에 두면 테스트가 `ClassNotFoundException`으로 실패하거나 `build` 폴더를 지우지 못하는 오류가 난다. `C:\Users\<사용자>\cafe-kiosk`처럼 영문 경로에 두고, 옮긴 뒤에는 `build`, `.gradle` 폴더를 지우고 다시 빌드한다.
 
 ### 방법 2: 터미널 (Gradle)
 
@@ -231,8 +233,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | `OrderServiceTest` | 11 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소, 내역 조회 |
 | **합계** | **46** | 해피아워 테스트 2개를 뺀 뒤 46개 모두 통과 |
 
-> 초안을 만든 환경에서는 JUnit 라이브러리를 내려받을 수 없어서, 같은 테스트 코드를 JUnit 호환 실행기로 돌려 확인했다.
-> **팀 환경에서 `./gradlew test`를 직접 실행해서 이 표를 갱신한다.** (TODO)
+> 팀 환경 실행 결과: 2026-11-25, Windows 11 · JDK 21 · IntelliJ에서 `src/test` 전체 실행, **46개 모두 통과** (심은지)
 
 ### 콘솔 기능 점검 (수동)
 
