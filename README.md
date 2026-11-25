@@ -152,7 +152,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|---|---|
 | `Member` | `points`, `totalSpent`, `grade` | `earn()`, `usePoints()`, `restorePoints()`, `reverseEarn()` | 포인트 부족·음수를 객체가 스스로 막고, 승급이 `earn()` 안에서만 일어나게 한다. |
 | `Order` | `status`, `discountLines`, `items` | `checkout()`, `cancel()`, `addItem()` | 결제 전 취소, 이중 취소, 결제 후 메뉴 추가 같은 잘못된 상태 전이를 막는다. |
-| `Coupon` | `used` | `onApplied()` | 결제가 성공했을 때만 사용 처리되고, 실패하면 쿠폰이 소모되지 않는다. |
+| `Coupon` | `used` | `onApplied()`, `onCancelled()` | 결제가 성공했을 때만 사용 처리되고, 실패하면 쿠폰이 소모되지 않는다. 주문을 취소하면 다시 쓸 수 있게 돌아온다. |
 | `MenuItem` 계층 | 가격·이름 | 생성자 검증 | 음수 가격, 빈 이름으로는 객체를 만들 수 없다. |
 
 ### 상속성
@@ -182,7 +182,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|---|---|
 | `MenuItem` | 추상 클래스 | `price()`, `description()` | `Coffee`, `Tea`, `Smoothie`, `Dessert`, `ExtraShot` ... |
 | `MembershipGrade` | 인터페이스 | `discount()`, `earnPoints()`, `evaluate()` | `Bronze`, `Silver`, `Gold`, `GuestGrade` |
-| `DiscountPolicy` | 인터페이스 | `name()`, `discount()`, `onApplied()` (default) | `GradeDiscount`, `Coupon` 계열 (`AmountCoupon`, `PercentCoupon`) |
+| `DiscountPolicy` | 인터페이스 | `name()`, `discount()`, `onApplied()`, `onCancelled()` (default) | `GradeDiscount`, `Coupon` 계열 (`AmountCoupon`, `PercentCoupon`) |
 | `Payment` | 추상 클래스 | `doPay()`, `doRefund()` | `CardPayment`, `PointPayment` |
 | `Customer` | 인터페이스 | `earn()`, `usePoints()` 등 | `Member`, `GuestMember` (비회원을 `null`이 아닌 객체로) |
 
@@ -229,11 +229,11 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | `MenuItemTest` | 10 | 사이즈·옵션 가격, 스무디 온도 제한, 디저트 옵션 금지, 옵션 겹치기 |
 | `MemberTest` | 10 | 적립, 자동 승급, 골드 보너스, 포인트 부족, 적립 취소, 취소 시 등급 재계산, 비회원 |
 | `DiscountPolicyTest` | 5 | 등급 할인, 쿠폰(정액/정률/만료/재사용) |
-| `OrderTest` | 12 | 할인 순서와 금액, 취소·환원, 결제 실패 시 상태 유지, 포인트 결제 적립 제외, 영수증 등급 고정 |
-| `OrderServiceTest` | 14 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소, 내역 조회, 결제 실패 시 주문번호 유지, 수량 표시, 결제 전 회원·쿠폰 확인 |
-| **합계** | **51** | 51개 모두 통과 |
+| `OrderTest` | 13 | 할인 순서와 금액, 취소·환원, 취소 시 쿠폰 복구, 결제 실패 시 상태 유지, 포인트 결제 적립 제외, 영수증 등급 고정 |
+| `OrderServiceTest` | 15 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소 후 같은 쿠폰 재사용, 내역 조회, 결제 실패 시 주문번호 유지, 수량 표시, 결제 전 회원·쿠폰 확인 |
+| **합계** | **53** | 53개 모두 통과 |
 
-> 팀 환경 실행 결과: 2026-11-25, Windows 11 · JDK 21 · IntelliJ에서 `src/test` 전체 실행, **51개 모두 통과** (심은지)
+> 팀 환경 실행 결과: 2026-11-25, Windows 11 · JDK 21 · IntelliJ에서 `src/test` 전체 실행, **53개 모두 통과** (심은지)
 
 ### 콘솔 기능 점검 (수동)
 
@@ -243,6 +243,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 옵션 조합 주문 | 아메리카노 L + 샷 추가 + 시럽 | 정상 (4,800원) |
 | 등급 할인·쿠폰·적립 | GOLD + `WELCOME500` | 정상 (4,060원 결제, 203P 적립) |
 | 포인트 결제 / 취소 환원 | GOLD가 쿠키를 포인트로 결제 후 취소 | 정상 (8,203P로 복구) |
+| 취소 후 쿠폰 재사용 | `WELCOME500`으로 주문 → 취소 → 같은 쿠폰으로 다시 주문 | 정상 (다시 500원 할인) |
 | 회원 조회 | `M003` | 정상 |
 | 잘못된 입력 | 글자·범위 밖 숫자 | 다시 입력 요청 (프로그램 종료 없음) |
 | 회원번호·쿠폰 오타 | `M0003`, `WELCOM500` | 그 자리에서 다시 입력 요청 (엔터는 비회원·쿠폰 없음) |
@@ -265,7 +266,6 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 
 ### 알려진 한계 (개선 후보)
 
-- 취소해도 사용한 쿠폰은 복구되지 않는다.
 - 데이터는 메모리에만 저장되어 프로그램을 종료하면 사라진다.
 
 ## 9. 객체지향 설계 개선 내용
@@ -283,6 +283,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 13주차 | 포인트로 낸 금액에도 포인트가 적립됨, 취소해도 등급이 그대로 | `Payment.earnableAmount()`를 두고 `PointPayment`만 0을 돌려줌. 취소 시 누적 금액으로 등급을 다시 계산 | `Order`에 `if (포인트 결제)`를 넣지 않고 결제 클래스가 스스로 결정 (다형성, 개방-폐쇄) |
 | 13주차 | 회원번호·쿠폰 오타가 결제 단계에서야 실패해서 처음부터 다시 주문 | `OrderService.checkMember()`, `checkCoupon()`으로 입력 즉시 확인, 결제 실패 시 결제 수단 다시 선택 | 사용자 입력 실수 처리. 확인 규칙은 `Coupon.checkUsable()`에 두어 결제 때와 같은 규칙을 씀 |
 | 13주차 | 영수증 등급이 지금 등급을 보여줘서 승급 뒤 예전 영수증이 바뀜 | 결제할 때 등급을 `Order`에 저장(`gradeAtOrder`) | 영수증은 그 시점 기록이어야 함 |
+| 13주차 | 주문을 취소해도 쓴 쿠폰이 "사용됨"으로 남음 | `DiscountPolicy`에 `onCancelled()`(기본은 아무 일 안 함)를 추가하고 `Coupon`만 오버라이딩해서 사용 여부를 되돌림. `Order`는 적용한 할인 목록을 기억했다가 취소 때 호출 | `onApplied()`와 짝을 맞춤. `Order`는 쿠폰인지 묻지 않고 모든 할인에 같은 메소드를 호출 (다형성). 새 할인이 생겨도 `Order`는 그대로 (개방-폐쇄) |
 
 > 13주차 현재 11·12주차 행이 비어 있다. 이번 주 안에 실제로 바꾼 내용으로 채운다.
 

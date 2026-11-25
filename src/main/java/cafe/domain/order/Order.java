@@ -28,6 +28,7 @@ public class Order {
     private final LocalDateTime createdAt;
     private final List<MenuItem> items = new ArrayList<>();
     private final List<DiscountLine> discountLines = new ArrayList<>();
+    private final List<DiscountPolicy> appliedPolicies = new ArrayList<>();   // 취소할 때 되돌리기 위해 기억
     private OrderStatus status = OrderStatus.CREATED;
     private Payment payment;
     private int paidAmount;
@@ -83,6 +84,7 @@ public class Order {
         policies.forEach(DiscountPolicy::onApplied);
 
         this.discountLines.addAll(lines);
+        this.appliedPolicies.addAll(policies);
         this.payment = payment;
         this.paidAmount = running;
         // 적립 기준 금액은 결제 수단이 정한다. (카드: 전액, 포인트: 0원) → Order는 결제 수단 종류를 몰라도 됨
@@ -92,7 +94,7 @@ public class Order {
         return new Receipt(this);
     }
 
-    /** 결제 완료 주문만 취소할 수 있다. 환불하고 적립 포인트를 되돌린다. */
+    /** 결제 완료 주문만 취소할 수 있다. 환불하고, 적립 포인트와 사용한 쿠폰을 되돌린다. */
     public void cancel() {
         if (status == OrderStatus.CANCELLED) {
             throw new CafeException("이미 취소된 주문이에요.");
@@ -102,6 +104,7 @@ public class Order {
         }
         payment.refund(paidAmount);
         customer.reverseEarn(payment.earnableAmount(paidAmount), earnedPoints);
+        appliedPolicies.forEach(DiscountPolicy::onCancelled);   // 쿠폰이면 다시 쓸 수 있게 됨
         status = OrderStatus.CANCELLED;
     }
 

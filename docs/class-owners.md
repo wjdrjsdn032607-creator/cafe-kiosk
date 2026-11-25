@@ -75,9 +75,9 @@
 
 | 클래스 | 역할 | OOP 원리 | 핵심 메소드·특징 |
 |---|---|---|---|
-| `DiscountPolicy` | 할인 규약(인터페이스). 등급 할인·쿠폰이 각자 구현 | 추상성, 다형성 | `name()`, `discount()`, `onApplied()` (default) |
+| `DiscountPolicy` | 할인 규약(인터페이스). 등급 할인·쿠폰이 각자 구현 | 추상성, 다형성 | `name()`, `discount()`, `onApplied()`, `onCancelled()` (default) |
 | `GradeDiscount` | 회원 등급 할인. 계산은 등급 객체에게 위임 | 다형성 | `discount()`가 `grade.discount()` 호출 |
-| `Coupon` | 쿠폰 공통 부모. 유효기간·사용 여부 검사, 사용 여부는 `private` | 상속성, 추상성, 은닉성 | `discount()` (final), `calculate()` (추상), `onApplied()` |
+| `Coupon` | 쿠폰 공통 부모. 유효기간·사용 여부 검사, 사용 여부는 `private` | 상속성, 추상성, 은닉성 | `discount()` (final), `calculate()` (추상), `onApplied()`, `onCancelled()` |
 | `AmountCoupon` | 정액 쿠폰 (예: 500원 할인) | 상속성 | `calculate()` |
 | `PercentCoupon` | 정률 쿠폰 (예: 10% 할인) | 상속성 | `calculate()` |
 | `Payment` | 결제 수단 추상 클래스(Template Method). 금액 검증 흐름은 부모가 잡음 | 추상성, 상속성 | `pay()`·`refund()` (final), `doPay()`·`doRefund()` (추상) |
@@ -85,7 +85,7 @@
 | `PointPayment` | 포인트 결제. 차감·환원은 `Customer`가 검증 | 상속성, 다형성 | `doPay()`, `doRefund()` |
 | `PaymentType` | 사용자가 고른 결제 수단과 `Payment` 클래스를 연결하는 enum | 추상성 | `create()` |
 
-**실행 흐름 예:** `Order.checkout()`이 할인 정책들을 등급, 쿠폰 순서로 돌며 `discount()`를 호출한다. 이어서 `payment.pay()`가 성공하면 `onApplied()`로 쿠폰이 사용 처리된다. 결제가 실패하면 쿠폰은 그대로 남는다.
+**실행 흐름 예:** `Order.checkout()`이 할인 정책들을 등급, 쿠폰 순서로 돌며 `discount()`를 호출한다. 이어서 `payment.pay()`가 성공하면 `onApplied()`로 쿠폰이 사용 처리된다. 결제가 실패하면 쿠폰은 그대로 남는다. 주문을 취소하면 `Order.cancel()`이 `onCancelled()`를 호출해서 쿠폰을 다시 쓸 수 있게 돌려놓는다.
 
 **새 유형 추가:** 새 할인(예: 생일 할인)은 `DiscountPolicy`를 구현해 `Main`의 `automaticPolicies`에 넣으면 되고, 새 결제 수단은 `Payment`를 상속해 `PaymentType`에 한 줄 추가한다.
 

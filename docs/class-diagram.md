@@ -109,6 +109,7 @@ classDiagram
         +name() String
         +discount(int) int
         +onApplied()
+        +onCancelled()
     }
     class GradeDiscount
     class Coupon {

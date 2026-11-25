@@ -113,6 +113,16 @@ class OrderServiceTest {
     }
 
     @Test
+    void 쿠폰을_쓴_주문을_취소하면_같은_쿠폰으로_다시_주문할_수_있다() {
+        Receipt receipt = orderService.placeOrder(americanoLarge("M001", "WELCOME500", PaymentType.CARD));
+        orderService.cancelOrder(receipt.getOrderId());
+
+        orderService.checkCoupon("WELCOME500");   // 예외 없이 통과
+        Receipt again = orderService.placeOrder(americanoLarge("M001", "WELCOME500", PaymentType.CARD));
+        assertTrue(again.format().contains("WELCOME500"));
+    }
+
+    @Test
     void 주문을_취소하면_상태가_바뀌고_포인트가_환원된다() {
         Receipt receipt = orderService.placeOrder(americanoLarge("M003", "", PaymentType.CARD));
         orderService.cancelOrder(receipt.getOrderId());

@@ -87,6 +87,20 @@ class OrderTest {
     }
 
     @Test
+    void 취소하면_사용한_쿠폰을_다시_쓸_수_있다() {
+        Order order = new Order("O-1", gold, clock);
+        order.addItem(largeAmericanoWithShotAndSyrup());
+        Coupon coupon = new AmountCoupon("WELCOME500", 500, LocalDate.now(clock).plusDays(30), clock);
+        order.checkout(new CardPayment("TEST", 1_000_000), List.of(coupon));
+        assertTrue(coupon.isUsed());
+
+        order.cancel();
+
+        assertFalse(coupon.isUsed());
+        assertEquals(500, coupon.discount(5_000));   // 다시 할인된다
+    }
+
+    @Test
     void 이미_취소한_주문은_다시_취소할_수_없다() {
         Order order = new Order("O-1", gold, clock);
         order.addItem(new Dessert("D1", "쿠키", 2_500));

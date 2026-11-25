@@ -15,4 +15,8 @@ public interface DiscountPolicy {
     /** 결제가 성공한 뒤 호출된다. 쿠폰처럼 사용 처리가 필요한 할인만 오버라이딩한다. */
     default void onApplied() {
     }
+
+    /** 결제한 주문이 취소된 뒤 호출된다. onApplied()에서 한 일을 되돌릴 할인만 오버라이딩한다. */
+    default void onCancelled() {
+    }
 }
