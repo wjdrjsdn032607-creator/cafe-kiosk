@@ -3,9 +3,7 @@ package cafe.domain;
 import cafe.common.CafeException;
 import cafe.domain.discount.AmountCoupon;
 import cafe.domain.discount.Coupon;
-import cafe.domain.discount.DiscountPolicy;
 import cafe.domain.discount.GradeDiscount;
-import cafe.domain.discount.HappyHourDiscount;
 import cafe.domain.discount.PercentCoupon;
 import cafe.domain.member.Gold;
 import cafe.domain.member.Silver;
@@ -14,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,25 +56,5 @@ class DiscountPolicyTest {
         Coupon coupon = new AmountCoupon("A", 500, LocalDate.of(2026, 12, 31), clockAt("2026-11-05T10:00:00"));
         coupon.onApplied();
         assertThrows(CafeException.class, () -> coupon.discount(5_000));
-    }
-
-    @Test
-    void 해피아워는_정해진_시간대에만_할인한다() {
-        LocalTime start = LocalTime.of(14, 0);
-        LocalTime end = LocalTime.of(16, 0);
-
-        DiscountPolicy inside = new HappyHourDiscount(start, end, 10, clockAt("2026-11-05T14:30:00"));
-        DiscountPolicy outside = new HappyHourDiscount(start, end, 10, clockAt("2026-11-05T17:00:00"));
-        DiscountPolicy atEnd = new HappyHourDiscount(start, end, 10, clockAt("2026-11-05T16:00:00"));
-
-        assertEquals(1_000, inside.discount(10_000));
-        assertEquals(0, outside.discount(10_000));
-        assertEquals(0, atEnd.discount(10_000));
-    }
-
-    @Test
-    void 해피아워는_시작이_종료보다_빨라야_한다() {
-        assertThrows(IllegalArgumentException.class,
-                () -> new HappyHourDiscount(LocalTime.of(16, 0), LocalTime.of(14, 0), 10, Clock.systemDefaultZone()));
     }
 }

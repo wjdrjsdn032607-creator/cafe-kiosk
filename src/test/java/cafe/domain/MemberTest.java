@@ -66,6 +66,17 @@ class MemberTest {
     }
 
     @Test
+    void 취소로_누적금액이_기준_아래로_내려가면_등급도_내려간다() {
+        Member member = new Member("M2", "김실버", 0, 120_000);   // SILVER
+        int earned = member.earn(200_000);                        // 누적 320,000 → GOLD
+        assertEquals("GOLD", member.getGrade().name());
+
+        member.reverseEarn(200_000, earned);                      // 누적 120,000으로 복귀
+        assertEquals("SILVER", member.getGrade().name());
+        assertEquals(120_000, member.getTotalSpent());
+    }
+
+    @Test
     void 비회원은_포인트를_사용할_수_없고_적립도_없다() {
         GuestMember guest = new GuestMember();
         assertEquals(0, guest.earn(10_000));

@@ -85,6 +85,21 @@ public class OrderService {
         return orderRepository.findByCustomerId(memberId.trim());
     }
 
+    /** 입력한 회원 번호가 있는지 바로 확인한다. (빈칸 = 비회원이라 통과) 없으면 예외. */
+    public void checkMember(String memberId) {
+        findCustomer(memberId);
+    }
+
+    /** 입력한 쿠폰을 지금 쓸 수 있는지 바로 확인한다. (빈칸 = 쿠폰 없음이라 통과) 안 되면 예외. */
+    public void checkCoupon(String couponCode) {
+        if (couponCode == null || couponCode.isBlank()) {
+            return;
+        }
+        couponRepository.findByCode(couponCode.trim())
+                .orElseThrow(() -> new CafeException("존재하지 않는 쿠폰이에요: " + couponCode))
+                .checkUsable();
+    }
+
     private Customer findCustomer(String memberId) {
         if (memberId == null || memberId.isBlank()) {
             return new GuestMember();

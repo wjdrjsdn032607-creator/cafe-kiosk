@@ -17,7 +17,7 @@
 1. **메뉴 조회**: 커피, 차, 스무디, 디저트
 2. **주문 생성**: 사이즈, 온도, 수량, 옵션 조합(샷 추가, 시럽, 휘핑크림)
 3. **회원 관리**: 가입·조회, 등급별 할인·포인트 적립, 누적 결제 금액에 따른 자동 승급 (BRONZE → SILVER → GOLD)
-4. **할인·결제**: 등급 할인, 해피아워(14~16시), 쿠폰(정액/정률), 카드·포인트 결제
+4. **할인·결제**: 등급 할인, 쿠폰(정액/정률), 카드·포인트 결제
 5. **주문 내역·영수증·취소**: 취소 시 환불과 적립 포인트 환원
 
 ### 실행 화면 예시 (GOLD 회원, 아이스 아메리카노 L + 샷 추가 + 시럽, 쿠폰 사용)
@@ -56,12 +56,12 @@ GOLD 등급 할인                    -240
 
 ## 2. 팀 구성
 
-| 담당 | 팀원 | 역할 | 주요 클래스 |
-|---|---|---|---|
-| A | 조민규 | 메뉴·옵션 | `MenuItem` 계층, `OptionDecorator` 계층 |
-| B | 신준서 | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
-| C | 심은지 | 할인·결제 | `DiscountPolicy` 구현체, `Payment` 계층 |
-| D | 정건우 | 주문·연결·콘솔 UI | `Order`, `OrderService`, `Receipt`, `ConsoleApp` |
+| 담당 | 팀원 | GitHub | 역할 | 주요 클래스 |
+|---|---|---|---|---|
+| A | 조민규 | (TODO) | 메뉴·옵션 | `MenuItem` 계층, `OptionDecorator` 계층 |
+| B | 신준서 | (TODO) | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
+| C | 심은지 | `eunz-711` | 할인·결제 | `DiscountPolicy` 구현체, `Payment` 계층 |
+| D | 정건우 | `wjdrjsdn032607-creator` | 주문·연결·콘솔 UI | `Order`, `OrderService`, `Receipt`, `ConsoleApp` |
 
 공통 책임: 자기 파트 JUnit 테스트, 예외 처리, README의 OOP 적용 이유 작성, AI 활용 기록, 발표 시 자기 파트 설명.
 
@@ -91,9 +91,9 @@ cafe-kiosk/
     │   ├─ domain/
     │   │   ├─ menu/           MenuItem, Beverage, Coffee, Tea, Smoothie, Dessert, OptionDecorator, ExtraShot, Syrup, WhippedCream, Option
     │   │   ├─ member/         Customer, Member, GuestMember, MembershipGrade, RateBasedGrade, Bronze, Silver, Gold, GuestGrade
-    │   │   ├─ discount/       DiscountPolicy, GradeDiscount, HappyHourDiscount, Coupon, AmountCoupon, PercentCoupon
+    │   │   ├─ discount/       DiscountPolicy, GradeDiscount, Coupon, AmountCoupon, PercentCoupon
     │   │   ├─ payment/        Payment, CardPayment, PointPayment, PaymentType
-    │   │   └─ order/          Order, OrderStatus, DiscountLine, Receipt
+    │   │   └─ order/          Order, OrderLine, OrderStatus, DiscountLine, Receipt
     │   ├─ repository/         저장소 인터페이스 4개와 메모리 구현
     │   ├─ service/            OrderService, MemberService, MenuService, 요청 객체
     │   └─ ui/console/         ConsoleApp, ConsoleInput, MenuScreen, OrderScreen, MemberScreen
@@ -119,6 +119,8 @@ cafe-kiosk/
 
 한글이 `???`로 보이면 `Help > Edit Custom VM Options`에 `-Dfile.encoding=UTF-8`을 추가하고 IntelliJ를 재시작한다.
 
+> **Windows 주의:** 프로젝트를 OneDrive 폴더나 한글이 들어간 경로에 두면 테스트가 `ClassNotFoundException`으로 실패하거나 `build` 폴더를 지우지 못하는 오류가 난다. `C:\Users\<사용자>\cafe-kiosk`처럼 영문 경로에 두고, 옮긴 뒤에는 `build`, `.gradle` 폴더를 지우고 다시 빌드한다.
+
 ### 방법 2: 터미널 (Gradle)
 
 ```bash
@@ -134,7 +136,6 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|
 | 회원 | `M001` 홍길동(BRONZE), `M002` 김실버(SILVER, 누적 12만 원), `M003` 이골드(GOLD, 누적 35만 원, 8,000P) |
 | 쿠폰 | `WELCOME500`(500원 할인), `SPECIAL10`(10% 할인), 각각 1회만 사용 가능 |
-| 해피아워 | 14:00~16:00 사이에 주문하면 10% 자동 할인 |
 
 ### 시연 시나리오 (예시)
 
@@ -151,7 +152,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|---|---|
 | `Member` | `points`, `totalSpent`, `grade` | `earn()`, `usePoints()`, `restorePoints()`, `reverseEarn()` | 포인트 부족·음수를 객체가 스스로 막고, 승급이 `earn()` 안에서만 일어나게 한다. |
 | `Order` | `status`, `discountLines`, `items` | `checkout()`, `cancel()`, `addItem()` | 결제 전 취소, 이중 취소, 결제 후 메뉴 추가 같은 잘못된 상태 전이를 막는다. |
-| `Coupon` | `used` | `onApplied()` | 결제가 성공했을 때만 사용 처리되고, 실패하면 쿠폰이 소모되지 않는다. |
+| `Coupon` | `used` | `onApplied()`, `onCancelled()` | 결제가 성공했을 때만 사용 처리되고, 실패하면 쿠폰이 소모되지 않는다. 주문을 취소하면 다시 쓸 수 있게 돌아온다. |
 | `MenuItem` 계층 | 가격·이름 | 생성자 검증 | 음수 가격, 빈 이름으로는 객체를 만들 수 없다. |
 
 ### 상속성
@@ -170,7 +171,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 위치 | 코드 | 설명 |
 |---|---|---|
 | `Order.subtotal()` | `items.stream().mapToInt(MenuItem::price)` | 커피, 디저트, 옵션이 붙은 메뉴 모두 같은 호출로 계산 |
-| `Order.checkout()` | `for (DiscountPolicy policy : policies) policy.discount(running)` | 등급 할인, 해피아워, 쿠폰을 구분하지 않고 순서대로 적용 |
+| `Order.checkout()` | `for (DiscountPolicy policy : policies) policy.discount(running)` | 등급 할인과 쿠폰을 구분하지 않고 순서대로 적용 |
 | `Order.checkout()` | `payment.pay(running)` | 카드인지 포인트인지 모르고 결제 |
 | `Member.earn()` | `grade.earnPoints(paidAmount)` | 등급마다 다른 적립 규칙 (`Gold`는 보너스) |
 | `OrderService.buildItem()` | `option.applyTo(item)` | 옵션 종류를 `if/else`로 나누지 않고 Decorator가 처리 |
@@ -181,7 +182,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 |---|---|---|---|
 | `MenuItem` | 추상 클래스 | `price()`, `description()` | `Coffee`, `Tea`, `Smoothie`, `Dessert`, `ExtraShot` ... |
 | `MembershipGrade` | 인터페이스 | `discount()`, `earnPoints()`, `evaluate()` | `Bronze`, `Silver`, `Gold`, `GuestGrade` |
-| `DiscountPolicy` | 인터페이스 | `name()`, `discount()`, `onApplied()` (default) | `GradeDiscount`, `HappyHourDiscount`, `Coupon` 계열 |
+| `DiscountPolicy` | 인터페이스 | `name()`, `discount()`, `onApplied()`, `onCancelled()` (default) | `GradeDiscount`, `Coupon` 계열 (`AmountCoupon`, `PercentCoupon`) |
 | `Payment` | 추상 클래스 | `doPay()`, `doRefund()` | `CardPayment`, `PointPayment` |
 | `Customer` | 인터페이스 | `earn()`, `usePoints()` 등 | `Member`, `GuestMember` (비회원을 `null`이 아닌 객체로) |
 
@@ -201,7 +202,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 
 | 내용 | 사용한 곳 |
 |---|---|
-| 생성자(값 검증) | `MenuItem`, `Member`, `Coupon`, `HappyHourDiscount` |
+| 생성자(값 검증) | `MenuItem`, `Member`, `Coupon` |
 | 메소드 오버라이딩 | `Smoothie.sizeSurcharge()`, `Gold.earnPoints()`, 각 `price()` |
 | 컬렉션 | `List<MenuItem>`, `Map`을 쓰는 `InMemory*Repository`, `EnumSet` |
 | 패키지 | `domain`, `repository`, `service`, `ui.console` |
@@ -214,7 +215,7 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 사용 도구 | Claude (Anthropic) |
 | 활용 수준 | **(TODO) 팀에서 확정.** 초안 생성 시점은 3단계에 해당 |
 | 주요 활용 내용 | 주제 선정 논의, 클래스 설계, 코드·테스트·문서 초안 생성 |
-| 팀에서 검토·수정한 부분 | **(TODO)** 예: 등급별 보너스 규칙 변경, 해피아워 시간대 조정, 예외 메시지 수정 |
+| 팀에서 검토·수정한 부분 | (심은지) 해피아워 기능 제외: 실제 시각에 따라 결과가 달라져 시연·테스트가 불안정해서 팀 결정으로 뺌. 콘솔로 직접 주문해 보며 AI 초안의 문제 7개를 찾아 고침 (결제 실패 시 주문번호 소비, 영수증 수량 표시, 포인트 결제 적립, 취소 시 등급·쿠폰 복구, 회원번호·쿠폰 입력 오류 처리, 영수증 등급 고정. 자세한 내용은 9장). 고칠 때마다 JUnit 테스트를 추가해 확인 (46개 → 53개)<br>**(TODO)** 다른 팀원이 검토·수정한 내용을 이어서 적는다 |
 | 팀에서 직접 결정한 설계 | **(TODO)** 근거는 `docs/ai-usage-log.md`의 3번 표에 작성 |
 
 자세한 주차별 기록은 [`docs/ai-usage-log.md`](docs/ai-usage-log.md)에 있다.
@@ -226,14 +227,13 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 테스트 클래스 | 개수 | 확인 내용 |
 |---|---|---|
 | `MenuItemTest` | 10 | 사이즈·옵션 가격, 스무디 온도 제한, 디저트 옵션 금지, 옵션 겹치기 |
-| `MemberTest` | 9 | 적립, 자동 승급, 골드 보너스, 포인트 부족, 적립 취소, 비회원 |
-| `DiscountPolicyTest` | 7 | 등급 할인, 쿠폰(정액/정률/만료/재사용), 해피아워 시간대 |
-| `OrderTest` | 11 | 할인 순서와 금액, 취소·환원, 결제 실패 시 상태 유지 |
-| `OrderServiceTest` | 11 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소, 내역 조회 |
-| **합계** | **48** | 초안 작성 환경에서 48개 모두 통과 |
+| `MemberTest` | 10 | 적립, 자동 승급, 골드 보너스, 포인트 부족, 적립 취소, 취소 시 등급 재계산, 비회원 |
+| `DiscountPolicyTest` | 5 | 등급 할인, 쿠폰(정액/정률/만료/재사용) |
+| `OrderTest` | 13 | 할인 순서와 금액, 취소·환원, 취소 시 쿠폰 복구, 결제 실패 시 상태 유지, 포인트 결제 적립 제외, 영수증 등급 고정 |
+| `OrderServiceTest` | 15 | 주문 전체 흐름, 없는 회원·메뉴·쿠폰, 취소 후 같은 쿠폰 재사용, 내역 조회, 결제 실패 시 주문번호 유지, 수량 표시, 결제 전 회원·쿠폰 확인 |
+| **합계** | **53** | 53개 모두 통과 |
 
-> 초안을 만든 환경에서는 JUnit 라이브러리를 내려받을 수 없어서, 같은 테스트 코드를 JUnit 호환 실행기로 돌려 확인했다.
-> **팀 환경에서 `./gradlew test`를 직접 실행해서 이 표를 갱신한다.** (TODO)
+> 팀 환경 실행 결과: 2026-11-25, Windows 11 · JDK 21 · IntelliJ에서 `src/test` 전체 실행, **53개 모두 통과** (심은지)
 
 ### 콘솔 기능 점검 (수동)
 
@@ -243,8 +243,12 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 옵션 조합 주문 | 아메리카노 L + 샷 추가 + 시럽 | 정상 (4,800원) |
 | 등급 할인·쿠폰·적립 | GOLD + `WELCOME500` | 정상 (4,060원 결제, 203P 적립) |
 | 포인트 결제 / 취소 환원 | GOLD가 쿠키를 포인트로 결제 후 취소 | 정상 (8,203P로 복구) |
+| 취소 후 쿠폰 재사용 | `WELCOME500`으로 주문 → 취소 → 같은 쿠폰으로 다시 주문 | 정상 (다시 500원 할인) |
 | 회원 조회 | `M003` | 정상 |
 | 잘못된 입력 | 글자·범위 밖 숫자 | 다시 입력 요청 (프로그램 종료 없음) |
+| 회원번호·쿠폰 오타 | `M0003`, `WELCOM500` | 그 자리에서 다시 입력 요청 (엔터는 비회원·쿠폰 없음) |
+| 결제 실패 | 포인트 0인 회원이 포인트 결제 | 결제 수단 다시 고르기 또는 주문 취소 선택 |
+| 같은 메뉴 여러 개 | 초코 쿠키 수량 3 | 영수증에 `초코 쿠키 x3  7,500` 한 줄 |
 
 ### 예외 처리 목록
 
@@ -262,8 +266,6 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 
 ### 개선 후보
 
-- 결제 단계에서 실패한 주문(예: 카드 한도 초과)도 주문번호 하나를 소비한다.
-- 취소해도 사용한 쿠폰은 복구되지 않고, 한 번 승급한 등급은 강등되지 않는다.
 - 데이터는 메모리에만 저장되어 프로그램을 종료하면 사라진다.
 
 ## 9. 객체지향 설계 개선 내용
@@ -273,11 +275,19 @@ Windows 터미널에서 한글이 깨지면 먼저 `chcp 65001`을 실행한다.
 | 시점 | 초기 설계 | 변경 | 변경 이유 (SOLID 원칙 등) |
 |---|---|---|---|
 | 초안 (9주차) | `OrderService`가 아닌 도메인 객체가 계산 | - | 설계 시작점 |
-| 11주차 (TODO) | | | |
-| 12주차 (TODO) | | | |
-| 13주차 (TODO) | | | |
+| 11~12주차 | 등급 3개(`Bronze`, `Silver`, `Gold`)가 `MembershipGrade`를 바로 구현. 초안에서도 "값만 다르면 형식적 상속"이라고 경고함 | `RateBasedGrade` 추상 클래스에 비율 계산을 모으고, 등급마다 승급 규칙 `evaluate()`를 다르게 구현. `Gold`는 1만 원 이상 결제 시 보너스 100P를 더함 | 같은 계산은 부모에 한 번만 두고(중복 제거), 자식은 실제로 다른 규칙만 가짐. **개방-폐쇄**: 새 등급(예: Platinum)은 클래스 하나만 추가 |
+| 11~12주차 | `Member`, `GuestMember`가 등급과 같이 묶여 있고 비회원 처리 방법이 정해지지 않음 | `Customer` 인터페이스를 두고 `Member`, `GuestMember`가 구현. 비회원은 할인·적립이 0인 `GuestMember` 객체(Null Object) | `Order`에 `if (비회원)` 분기가 없음. **리스코프 치환**: 회원 자리에 비회원을 넣어도 그대로 동작. (`GuestMember`의 빈 메소드는 **인터페이스 분리** 관점에서 이슈 2로 검토) |
+| 11~12주차 | 쿠폰은 `CouponDiscount` 하나, 등급 할인은 `MembershipGrade`에서 따로 계산 | `Coupon` 추상 클래스가 유효기간·사용 여부를 검사하고(`discount()`는 `final`), `AmountCoupon`, `PercentCoupon`은 `calculate()`만 구현. 등급 할인도 `GradeDiscount`로 만들어 같은 할인 목록에서 등급 → 쿠폰 순서로 적용 | **단일 책임**: 공통 검사는 `Coupon` 한 곳. **개방-폐쇄**: 새 쿠폰 종류는 `calculate()`만 구현하면 되고, 새 할인은 목록에 넣기만 하면 `Order`는 그대로 |
+| 11~12주차 | 메뉴·회원·주문·쿠폰을 어디에 보관할지 설계에 없음 | `MenuRepository` 등 저장소 인터페이스 4개와 `InMemory…` 구현을 만들고, `OrderService`는 인터페이스에만 의존 | **의존성 역전**: 서비스가 "메모리에 저장"이라는 구체 방식을 모름. 나중에 파일·DB 저장으로 바꿔도 서비스는 그대로 |
+| 13주차 | 해피아워(14~16시 10%)를 자동 할인으로 적용 | 해피아워 제외, `automaticPolicies`는 빈 목록으로 유지 | 실제 시각에 따라 결과가 달라져 시연과 테스트가 불안정. 팀 결정으로 제외했고, 자동 할인을 넣는 자리는 남겨서 새 할인(예: 생일 할인)은 `Main`에 한 줄 추가로 가능 (**개방-폐쇄**) |
+| 13주차 | 결제가 실패해도 주문번호가 하나 소비됨 | `nextId()`는 다음 번호를 보기만 하고, 번호는 `save()`할 때 확정 | 실패한 주문 때문에 번호가 건너뛰면 기록이 헷갈림. **단일 책임**: 번호를 정하는 일은 저장소 한 곳만 맡음 |
+| 13주차 | 같은 메뉴를 여러 개 시키면 영수증에 같은 줄이 반복됨 | `OrderLine`(메뉴, 수량) record를 만들어 `x3`처럼 한 줄로 표시 | 영수증 가독성. **단일 책임**: 영수증용으로 묶어 보여주는 일은 `OrderLine`이 맡고, `Order`의 저장 방식은 그대로 둠 |
+| 13주차 | 포인트로 낸 금액에도 포인트가 적립됨, 취소해도 등급이 그대로 | `Payment.earnableAmount()`를 두고 `PointPayment`만 0을 돌려줌. 취소 시 누적 금액으로 등급을 다시 계산 | `Order`에 `if (포인트 결제)`를 넣지 않고 결제 클래스가 스스로 결정 (**다형성**, **개방-폐쇄**: 새 결제 수단은 클래스만 추가하면 `Order`는 그대로) |
+| 13주차 | 회원번호·쿠폰 오타가 결제 단계에서야 실패해서 처음부터 다시 주문 | `OrderService.checkMember()`, `checkCoupon()`으로 입력 즉시 확인, 결제 실패 시 결제 수단 다시 선택 | 사용자 입력 실수 처리. **단일 책임**: 쿠폰을 쓸 수 있는지 판단하는 규칙은 `Coupon.checkUsable()` 한 곳에만 두고, 입력 확인과 결제가 같은 규칙을 씀 |
+| 13주차 | 영수증 등급이 지금 등급을 보여줘서 승급 뒤 예전 영수증이 바뀜 | 결제할 때 등급을 `Order`에 저장(`gradeAtOrder`) | 영수증은 그 시점 기록이어야 함. **은닉성**: 주문 당시 정보는 `Order`가 결제 순간에 직접 기록하고, 밖에서는 바꿀 수 없음 |
+| 13주차 | 주문을 취소해도 쓴 쿠폰이 "사용됨"으로 남음 | `DiscountPolicy`에 `onCancelled()`(기본은 아무 일 안 함)를 추가하고 `Coupon`만 오버라이딩해서 사용 여부를 되돌림. `Order`는 적용한 할인 목록을 기억했다가 취소 때 호출 | `onApplied()`와 짝을 맞춤. `Order`는 쿠폰인지 묻지 않고 모든 할인에 같은 메소드를 호출 (**다형성**). 새 할인이 생겨도 `Order`는 그대로 (**개방-폐쇄**) |
 
-> 13주차 현재 11·12주차 행이 비어 있다. 이번 주 안에 실제로 바꾼 내용으로 채운다.
+> 11~12주차 행은 설계 초안(11/5)과 팀 기준 코드(11/19)를 비교해서 바뀐 점을 적었다.
 
 12주차 SOLID 점검 질문 (개선 후보 찾기):
 

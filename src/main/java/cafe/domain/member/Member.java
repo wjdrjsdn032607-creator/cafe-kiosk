@@ -95,5 +95,7 @@ public class Member implements Customer {
     public void reverseEarn(int paidAmount, int earnedPoints) {
         points = Math.max(0, points - earnedPoints);
         totalSpent = Math.max(0, totalSpent - paidAmount);
+        // 누적 금액이 줄었으니 등급도 다시 계산한다. (기준 아래로 내려가면 강등)
+        grade = MembershipGrade.gradeFor(totalSpent);
     }
 }

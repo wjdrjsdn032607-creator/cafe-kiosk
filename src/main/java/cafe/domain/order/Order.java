@@ -28,10 +28,12 @@ public class Order {
     private final LocalDateTime createdAt;
     private final List<MenuItem> items = new ArrayList<>();
     private final List<DiscountLine> discountLines = new ArrayList<>();
+    private final List<DiscountPolicy> appliedPolicies = new ArrayList<>();   // 취소할 때 되돌리기 위해 기억
     private OrderStatus status = OrderStatus.CREATED;
     private Payment payment;
     private int paidAmount;
     private int earnedPoints;
+    private String gradeAtOrder;   // 결제할 때의 등급 이름. 나중에 승급·강등돼도 영수증은 이 값을 쓴다.
 
     public Order(String id, Customer customer, Clock clock) {
         this.id = Objects.requireNonNull(id, "주문번호가 필요해요.");
@@ -64,6 +66,7 @@ public class Order {
         }
 
         List<DiscountPolicy> policies = new ArrayList<>();
+        String gradeName = customer.getGrade().name();   // 할인에 쓰는 등급 = 영수증에 남길 등급
         policies.add(new GradeDiscount(customer.getGrade()));
         policies.addAll(extraPolicies);
 
@@ -81,14 +84,17 @@ public class Order {
         policies.forEach(DiscountPolicy::onApplied);
 
         this.discountLines.addAll(lines);
+        this.appliedPolicies.addAll(policies);
         this.payment = payment;
         this.paidAmount = running;
-        this.earnedPoints = customer.earn(running);
+        // 적립 기준 금액은 결제 수단이 정한다. (카드: 전액, 포인트: 0원) → Order는 결제 수단 종류를 몰라도 됨
+        this.earnedPoints = customer.earn(payment.earnableAmount(running));
+        this.gradeAtOrder = gradeName;
         this.status = OrderStatus.PAID;
         return new Receipt(this);
     }
 
-    /** 결제 완료 주문만 취소할 수 있다. 환불하고 적립 포인트를 되돌린다. */
+    /** 결제 완료 주문만 취소할 수 있다. 환불하고, 적립 포인트와 사용한 쿠폰을 되돌린다. */
     public void cancel() {
         if (status == OrderStatus.CANCELLED) {
             throw new CafeException("이미 취소된 주문이에요.");
@@ -97,7 +103,8 @@ public class Order {
             throw new CafeException("결제 전 주문은 취소할 수 없어요.");
         }
         payment.refund(paidAmount);
-        customer.reverseEarn(paidAmount, earnedPoints);
+        customer.reverseEarn(payment.earnableAmount(paidAmount), earnedPoints);
+        appliedPolicies.forEach(DiscountPolicy::onCancelled);   // 쿠폰이면 다시 쓸 수 있게 됨
         status = OrderStatus.CANCELLED;
     }
 
@@ -107,6 +114,11 @@ public class Order {
 
     public String getId() {
         return id;
+    }
+
+    /** 주문(결제)했을 때의 등급 이름. 결제 전이면 지금 등급을 돌려준다. */
+    public String getGradeAtOrder() {
+        return gradeAtOrder != null ? gradeAtOrder : customer.getGrade().name();
     }
 
     public Customer getCustomer() {
@@ -119,6 +131,31 @@ public class Order {
 
     public List<MenuItem> getItems() {
         return Collections.unmodifiableList(items);
+    }
+
+    /**
+     * 같은 메뉴가 연달아 담긴 것을 한 줄로 묶어서 돌려준다. (수량 표시용)
+     * 주문할 때 수량 3이면 같은 MenuItem 객체가 3번 담기므로, 같은 객체끼리 묶으면 된다.
+     */
+    public List<OrderLine> getLines() {
+        List<OrderLine> lines = new ArrayList<>();
+        MenuItem current = null;
+        int count = 0;
+        for (MenuItem item : items) {
+            if (item == current) {
+                count++;
+            } else {
+                if (current != null) {
+                    lines.add(new OrderLine(current, count));
+                }
+                current = item;
+                count = 1;
+            }
+        }
+        if (current != null) {
+            lines.add(new OrderLine(current, count));
+        }
+        return Collections.unmodifiableList(lines);
     }
 
     public List<DiscountLine> getDiscountLines() {
