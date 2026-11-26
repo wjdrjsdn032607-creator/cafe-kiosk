@@ -150,8 +150,9 @@ public class OrderScreen {
             Size[] sizes = Size.values();
             StringBuilder prompt = new StringBuilder("사이즈: ");
             for (int i = 0; i < sizes.length; i++) {
+                int extraPrice = item.configure(sizes[i], null).price() - item.getBasePrice();
                 prompt.append(i + 1).append('.').append(sizes[i].getLabel())
-                        .append("(+").append(sizes[i].getSurcharge()).append(")  ");
+                        .append("(+").append(extraPrice).append(")  ");
             }
             out.println(prompt);
             size = sizes[in.readInt("사이즈 번호 > ", 1, sizes.length) - 1];
