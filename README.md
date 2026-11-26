@@ -59,7 +59,7 @@ GOLD 등급 할인                    -240
 | 담당 | 팀원 | GitHub | 역할 | 주요 클래스 |
 |---|---|---|---|---|
 | A | 조민규 | (TODO) | 메뉴·옵션 | `MenuItem` 계층, `OptionDecorator` 계층 |
-| B | 신준서 | (TODO) | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
+| B | 신준서 |  | 회원·등급·포인트 | `Member`, `GuestMember`, `MembershipGrade` 구현체 |
 | C | 심은지 | `eunz-711` | 할인·결제 | `DiscountPolicy` 구현체, `Payment` 계층 |
 | D | 정건우 | `wjdrjsdn032607-creator` | 주문·연결·콘솔 UI | `Order`, `OrderService`, `Receipt`, `ConsoleApp` |
 
