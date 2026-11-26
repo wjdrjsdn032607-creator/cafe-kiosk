@@ -52,7 +52,7 @@
 | 클래스 | 역할 | OOP 원리 | 핵심 메소드·특징 |
 |---|---|---|---|
 | `Customer` | 주문하는 사람의 규약(인터페이스). 회원과 비회원이 구현 | 추상성, 다형성 | `earn()`, `usePoints()`, `restorePoints()`, `reverseEarn()` |
-| `Member` | 회원. 포인트·누적 금액·등급을 `private`으로 보호하고 승급을 자동 처리 | 은닉성 | `earn()`이 적립·누적·승급을 한 번에 처리, `usePoints()`는 부족 시 `CafeException` |
+| `Member` | 회원. 포인트·누적 금액·등급을 `private`으로 보호하고 승급을 자동 처리 | 은닉성 | `earn()`이 적립·누적·승급을 한 번에 처리, `usePoints()`는 부족 시 `CafeException`, `reverseEarn()`은 취소 시 누적 금액으로 등급을 다시 계산 |
 | `GuestMember` | 비회원. `null` 대신 쓰는 객체(Null Object). 할인·적립 없음, 포인트 사용은 예외 | 다형성 | `usePoints()` 예외, `earn()`은 0 반환 |
 | `MembershipGrade` | 등급 규약(인터페이스). 할인·적립·승급 판단을 등급이 직접 계산 | 추상성, 다형성 | `discount()`, `earnPoints()`, `evaluate()`, `gradeFor()` |
 | `RateBasedGrade` | 할인율·적립률(%)로 계산하는 등급의 공통 부모 | 상속성 | `discount()`, `earnPoints()` 공통 계산 |
@@ -65,7 +65,7 @@
 
 **새 유형 추가:** 새 등급(예: VIP)은 `RateBasedGrade`를 상속한 클래스를 만들고 `Gold.evaluate()`의 반환값을 한 줄 바꾼다.
 
-**테스트:** `MemberTest` (9개)
+**테스트:** `MemberTest` (10개)
 
 ---
 
@@ -77,12 +77,12 @@
 |---|---|---|---|
 | `DiscountPolicy` | 할인 규약(인터페이스). 등급 할인·쿠폰이 각자 구현 | 추상성, 다형성 | `name()`, `discount()`, `onApplied()`, `onCancelled()` (default) |
 | `GradeDiscount` | 회원 등급 할인. 계산은 등급 객체에게 위임 | 다형성 | `discount()`가 `grade.discount()` 호출 |
-| `Coupon` | 쿠폰 공통 부모. 유효기간·사용 여부 검사, 사용 여부는 `private` | 상속성, 추상성, 은닉성 | `discount()` (final), `calculate()` (추상), `onApplied()`, `onCancelled()` |
+| `Coupon` | 쿠폰 공통 부모. 유효기간·사용 여부 검사, 사용 여부는 `private` | 상속성, 추상성, 은닉성 | `checkUsable()` (사용 가능 여부 확인, 결제 전 입력 확인에도 씀), `discount()` (final), `calculate()` (추상), `onApplied()`, `onCancelled()` |
 | `AmountCoupon` | 정액 쿠폰 (예: 500원 할인) | 상속성 | `calculate()` |
 | `PercentCoupon` | 정률 쿠폰 (예: 10% 할인) | 상속성 | `calculate()` |
-| `Payment` | 결제 수단 추상 클래스(Template Method). 금액 검증 흐름은 부모가 잡음 | 추상성, 상속성 | `pay()`·`refund()` (final), `doPay()`·`doRefund()` (추상) |
+| `Payment` | 결제 수단 추상 클래스(Template Method). 금액 검증 흐름은 부모가 잡음 | 추상성, 상속성 | `pay()`·`refund()` (final), `doPay()`·`doRefund()` (추상), `earnableAmount()` (적립 기준 금액, 기본은 결제 금액 전부) |
 | `CardPayment` | 카드 결제(모의). 한도를 넘으면 거절 | 상속성 | `doPay()` |
-| `PointPayment` | 포인트 결제. 차감·환원은 `Customer`가 검증 | 상속성, 다형성 | `doPay()`, `doRefund()` |
+| `PointPayment` | 포인트 결제. 차감·환원은 `Customer`가 검증. 포인트로 낸 금액은 적립하지 않음 | 상속성, 다형성 | `doPay()`, `doRefund()`, `earnableAmount()`가 0 반환 |
 | `PaymentType` | 사용자가 고른 결제 수단과 `Payment` 클래스를 연결하는 enum | 추상성 | `create()` |
 
 **실행 흐름 예:** `Order.checkout()`이 할인 정책들을 등급, 쿠폰 순서로 돌며 `discount()`를 호출한다. 이어서 `payment.pay()`가 성공하면 `onApplied()`로 쿠폰이 사용 처리된다. 결제가 실패하면 쿠폰은 그대로 남는다. 주문을 취소하면 `Order.cancel()`이 `onCancelled()`를 호출해서 쿠폰을 다시 쓸 수 있게 돌려놓는다.
@@ -99,32 +99,33 @@
 
 | 클래스 | 역할 | OOP 원리 | 핵심 메소드·특징 |
 |---|---|---|---|
-| `Order` | 주문. 금액 합산, 할인 적용, 결제, 적립, 취소를 직접 처리. `status`는 `private` | 은닉성, 다형성 | `subtotal()`, `checkout()`, `cancel()`, `addItem()` |
+| `Order` | 주문. 금액 합산, 할인 적용, 결제, 적립, 취소를 직접 처리. `status`는 `private` | 은닉성, 다형성 | `subtotal()`, `checkout()`, `cancel()`(환불·적립·쿠폰 되돌리기), `addItem()`, `getLines()`(수량 묶기), `getGradeAtOrder()`(주문 당시 등급) |
 | `OrderStatus` | 주문 상태(생성, 결제 완료, 취소) | 은닉성 | 값 목록 |
 | `DiscountLine` | 적용된 할인 한 줄(이름, 금액) record | - | 값 객체 |
 | `OrderLine` | 영수증에 보여줄 한 줄(메뉴, 수량) record | - | `lineTotal()` |
 | `Receipt` | 영수증. 출력은 하지 않고 문자열만 만들어 줌 | 책임 분리 | `format()` |
-| `OrderService` | 주문 흐름 연결(회원·메뉴·쿠폰 확인 → 주문 생성 → 결제). 계산은 하지 않음 | 책임 분리 | `placeOrder()`, `cancelOrder()`, `findOrders()` |
+| `OrderService` | 주문 흐름 연결(회원·메뉴·쿠폰 확인 → 주문 생성 → 결제). 계산은 하지 않음 | 책임 분리 | `placeOrder()`, `cancelOrder()`, `findOrders()`, `checkMember()`·`checkCoupon()`(결제 전 입력 확인) |
 | `MemberService` | 회원 가입·조회 | 책임 분리 | `register()`, `find()` |
 | `MenuService` | 메뉴 목록 조회 | 책임 분리 | `findAll()` |
 | `OrderRequest`, `OrderItemRequest` | UI가 입력받은 값을 서비스로 전달하는 record. 생성 시 검증 | 은닉성 | 생성자(compact) 검증 |
 | `MenuRepository`, `MemberRepository`, `OrderRepository`, `CouponRepository` | 저장소 규약(인터페이스) 4개 | 추상성 | `save()`, `findById()` 등 |
-| `InMemoryMenuRepository` 외 3개 | 메모리(`Map`)에 저장하는 구현. DB로 바꿔도 서비스는 그대로 | 다형성 | `nextId()` (회원 M001, 주문 O-0001) |
+| `InMemoryMenuRepository` 외 3개 | 메모리(`Map`)에 저장하는 구현. DB로 바꿔도 서비스는 그대로 | 다형성 | `nextId()` (회원 M001, 주문 O-0001). 주문번호는 `save()`할 때 확정되어 결제 실패 시 번호가 넘어가지 않음 |
 | `ConsoleApp` | 메인 메뉴 반복, 번호에 따라 화면으로 연결 | 책임 분리 | `run()` |
 | `ConsoleInput` | `Scanner`를 감싸 입력 형식(숫자, 범위)만 확인 | 은닉성 | `readLine()`, `readInt()` |
-| `MenuScreen`, `OrderScreen`, `MemberScreen` | 기능별 화면. 입력받고 서비스를 호출해 결과 출력 | 책임 분리 | `show()`, `start()`, `history()` |
+| `MenuScreen`, `OrderScreen`, `MemberScreen` | 기능별 화면. 입력받고 서비스를 호출해 결과 출력 | 책임 분리 | `show()`, `start()`, `history()`. `OrderScreen`은 회원번호·쿠폰 오타와 결제 실패 시 다시 입력받음 |
 | `Main` | 객체를 조립(의존성 주입)하고 실행 | 추상성 | `main()` |
 | `SampleData` | 시연용 샘플 메뉴·회원·쿠폰 로딩 | - | `load()` |
 | `CafeException` | 업무 규칙 위반 예외(포인트 부족, 만료 쿠폰 등) | - | 예외 메시지 |
 
 **주문 한 건의 실행 흐름:**
 
-1. `OrderScreen.start()`가 메뉴·옵션·회원·쿠폰·결제 수단을 입력받아 `OrderRequest`를 만든다.
+1. `OrderScreen.start()`가 메뉴·옵션·회원·쿠폰·결제 수단을 입력받아 `OrderRequest`를 만든다. 회원번호·쿠폰은 입력하자마자 `checkMember()`, `checkCoupon()`으로 확인한다.
 2. `OrderService.placeOrder()`가 회원, 메뉴(옵션 적용), 쿠폰을 확인하고 `Order`를 만든다.
 3. `Order.checkout()`이 할인을 순서대로 적용하고 `Payment.pay()`로 결제한다.
-4. 결제가 성공하면 쿠폰이 사용 처리되고 `Customer.earn()`으로 포인트가 적립된다.
-5. `Receipt.format()`이 만든 문자열을 `OrderScreen`이 출력한다.
+4. 결제가 성공하면 쿠폰이 사용 처리되고 `Customer.earn()`으로 포인트가 적립된다. 적립 기준 금액은 `Payment.earnableAmount()`가 정한다 (포인트 결제는 0원).
+5. 주문이 저장소에 저장되면서 주문번호가 확정되고, `Receipt.format()`이 만든 문자열을 `OrderScreen`이 출력한다. 같은 메뉴는 `OrderLine`으로 묶여 `x3`처럼 한 줄로 나온다.
+6. 취소하면 `Order.cancel()`이 환불, 적립 포인트·누적 금액·등급 되돌리기, 쿠폰 복구(`onCancelled()`)를 한다.
 
 **새 유형 추가:** 핵심 원칙은 `Order`와 `OrderService`를 고치지 않는 것이다. 새 메뉴·등급·할인·결제가 늘어도 이 클래스들은 바뀔 필요가 없어야 한다.
 
-**테스트:** `OrderTest` (11개), `OrderServiceTest` (11개)
+**테스트:** `OrderTest` (13개), `OrderServiceTest` (15개)
