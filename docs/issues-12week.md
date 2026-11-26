@@ -1,4 +1,4 @@
-# 12주차 GitHub Issues 목록 (복사해서 등록)
+# 12주차 GitHub Issues 목록
 
 Issues 탭 → New issue에 제목과 본문을 붙여넣고, 오른쪽 Assignees에 담당자를 지정한다.
 브랜치 이름은 담당별로 `feature/menu`, `feature/member`, `feature/discount-payment`, `feature/order-ui`를 쓴다.
