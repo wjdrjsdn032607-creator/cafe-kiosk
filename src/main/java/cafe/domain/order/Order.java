@@ -2,7 +2,6 @@ package cafe.domain.order;
 
 import cafe.common.CafeException;
 import cafe.domain.discount.DiscountPolicy;
-import cafe.domain.discount.GradeDiscount;
 import cafe.domain.member.Customer;
 import cafe.domain.menu.MenuItem;
 import cafe.domain.payment.Payment;
@@ -15,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 주문. 금액 계산, 할인 적용, 결제, 포인트 적립, 취소까지 주문의 규칙은 이 클래스가 직접 처리한다.
+ * 주문 상태, 결제, 포인트 적립 및 취소를 관리한다. 할인 계산은 DiscountCalculator에 위임한다.
  * (서비스는 객체를 연결만 한다.)
  *
  * [은닉성] 상태(status)는 checkout()/cancel()로만 바뀌고, 잘못된 순서의 호출은 예외가 된다.
@@ -65,20 +64,15 @@ public class Order {
             throw new CafeException("주문할 메뉴가 없어요.");
         }
 
-        List<DiscountPolicy> policies = new ArrayList<>();
-        String gradeName = customer.getGrade().name();   // 할인에 쓰는 등급 = 영수증에 남길 등급
-        policies.add(new GradeDiscount(customer.getGrade()));
-        policies.addAll(extraPolicies);
+        String gradeName = customer.getGrade().name();
 
-        List<DiscountLine> lines = new ArrayList<>();
-        int running = subtotal();
-        for (DiscountPolicy policy : policies) {
-            int discount = Math.min(policy.discount(running), running);
-            if (discount > 0) {
-                lines.add(new DiscountLine(policy.name(), discount));
-                running -= discount;
-            }
-        }
+        DiscountCalculator.Result result =
+                DiscountCalculator.calculate(
+                        subtotal(), customer, extraPolicies);
+
+        int running = result.finalAmount();
+        List<DiscountLine> lines = result.lines();
+        List<DiscountPolicy> policies = result.policies();
 
         payment.pay(running);          // 실패하면 여기서 예외, 아래는 실행되지 않는다.
         policies.forEach(DiscountPolicy::onApplied);
